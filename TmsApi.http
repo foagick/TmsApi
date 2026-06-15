@@ -1,6 +1,34 @@
-@TmsApi_HostAddress = http://localhost:5285
+@TmsApi_HostAddress = http://localhost:5000
 
 GET {{TmsApi_HostAddress}}/weatherforecast/
 Accept: application/json
+
+### 
+GET {{TmsApi_HostAddress}}/api/assessments/results/
+Accept: application/json
+
+
+### 1. GET all
+GET {{TmsApi_HostAddress}}/api/enrollments
+Accept: application/json
+
+### 2. POST new enrollment
+POST {{TmsApi_HostAddress}}/api/enrollments
+Content-Type: application/json
+
+{
+  "studentId": "S-001",
+  "courseCode": "CS-101"
+}
+
+### 3. GET by id
+GET {{TmsApi_HostAddress}}/api/enrollments/{id}
+Accept: application/json
+
+### 4. DELETE by id
+DELETE {{TmsApi_HostAddress}}/api/enrollments/{id}
+
+### 5. GET deleted enrollment
+GET {{TmsApi_HostAddress}}/api/enrollments/{id}
 
 ###
