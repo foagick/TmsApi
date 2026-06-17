@@ -6,6 +6,8 @@ builder.Services.AddControllers();
 
 // Register services
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+// builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+
 builder.Services.AddAuthentication();   // minimal setup
 builder.Services.AddAuthorization();
 
