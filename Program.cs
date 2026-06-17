@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using TmsApi.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,6 +10,10 @@ builder.Services.AddControllers();
 // Register services
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+
+// Register TmsDbContext scoped for incoming HTTP requests
+builder.Services.AddDbContext<TmsDbContext>(options =>
+options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
 
 builder.Services.AddAuthentication();   // minimal setup
 builder.Services.AddAuthorization();
@@ -32,6 +39,7 @@ letterGrade = "A"
 }));
 app.UseAuthentication();
 app.UseAuthorization();
+
 
 
 // var builder = WebApplication.CreateBuilder(args);
