@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\CSUG\\Desktop\\fa\\TmsApi\\TmsApi.csproj": {}
+    "D:\\Qiyas\\TmsApi\\TmsApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\CSUG\\Desktop\\fa\\TmsApi\\TmsApi.csproj": {
+    "D:\\Qiyas\\TmsApi\\TmsApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\CSUG\\Desktop\\fa\\TmsApi\\TmsApi.csproj",
+        "projectUniqueName": "D:\\Qiyas\\TmsApi\\TmsApi.csproj",
         "projectName": "TmsApi",
-        "projectPath": "C:\\Users\\CSUG\\Desktop\\fa\\TmsApi\\TmsApi.csproj",
-        "packagesPath": "C:\\Users\\CSUG\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\CSUG\\Desktop\\fa\\TmsApi\\obj\\",
+        "projectPath": "D:\\Qiyas\\TmsApi\\TmsApi.csproj",
+        "packagesPath": "C:\\Users\\hamed\\.nuget\\packages\\",
+        "outputPath": "D:\\Qiyas\\TmsApi\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\CSUG\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\hamed\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -82,7 +86,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
