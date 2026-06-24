@@ -37,6 +37,17 @@ namespace TmsApi.Data.Configurations
                    .WithOne(c => c.Student)
                    .HasForeignKey(c => c.StudentId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(s => s.RowVersion)
+                    .IsRowVersion();
+
+           builder.Property(s => s.IsDeleted)
+                  .HasDefaultValue(false);
+
+           builder.HasQueryFilter(s => !s.IsDeleted);
+
+           builder.Property<DateTime>("LastUpdated");
+      
         }
     }
 }

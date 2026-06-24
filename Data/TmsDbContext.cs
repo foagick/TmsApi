@@ -15,4 +15,17 @@ public class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbContext(op
             // Automatically apply all IEntityTypeConfiguration<T> classes
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(TmsDbContext).Assembly);
         }
+
+        public override int SaveChanges()
+{
+    foreach (var entry in ChangeTracker.Entries<Student>())
+    {
+        if (entry.State == EntityState.Modified)
+        {
+            entry.Property("LastUpdated").CurrentValue = DateTime.UtcNow;
+        }
+    }
+    return base.SaveChanges();
+}
+
 }

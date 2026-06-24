@@ -32,6 +32,10 @@ namespace TmsApi.Data.Configurations
             // Prevent duplicate enrollments for the same student/course
             builder.HasIndex(e => new { e.StudentId, e.CourseId })
                    .IsUnique();
+
+            // Archiving
+            builder.Property(e => e.IsArchived)
+                   .HasDefaultValue(false);
         }
     }
 }
