@@ -10,18 +10,17 @@ namespace TmsApi.Data.Configurations
         {
             builder.HasKey(c => c.Id);
 
-            // Natural key: Code must be unique
-            builder.HasIndex(c => c.Code).IsUnique();
-
             builder.Property(c => c.Code)
                    .IsRequired()
-                   .HasMaxLength(20);
+                   .HasMaxLength(10);
 
             builder.Property(c => c.Title)
                    .IsRequired()
                    .HasMaxLength(200);
 
-            builder.Property(c => c.Capacity)
+           builder.HasIndex(c => c.Code).IsUnique();
+
+            builder.Property(c => c.MaxCapacity)
                    .HasDefaultValue(30);
 
             // Relationships
