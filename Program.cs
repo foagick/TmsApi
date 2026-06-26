@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using Tms.Api.Services;
 using TmsApi.Data;
 using TmsApi.Entities;
 
@@ -10,8 +12,12 @@ builder.Services.AddControllers();
 
 // Register services
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 // Register TmsDbContext scoped for incoming HTTP requests
 builder.Services.AddDbContext<TmsDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
@@ -23,6 +29,9 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 // Configure the HTTP request pipeline.
 
 app.UseHttpsRedirection();
@@ -33,6 +42,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+
+if (app.Environment.IsDevelopment())
+{
+app.MapOpenApi();
+app.MapScalarApiReference();
+}
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {

@@ -238,3 +238,7 @@ D:\Qiyas\TmsApi\obj\Debug\net10.0\swae.build.ex.cache
 D:\Qiyas\TmsApi\obj\Debug\net10.0\TmsApi.csproj.Up2Date
 D:\Qiyas\TmsApi\obj\Debug\net10.0\TmsApi.genruntimeconfig.cache
 D:\Qiyas\TmsApi\obj\Debug\net10.0\ref\TmsApi.dll
+C:\Users\CSUG\Desktop\fa\TmsApi\bin\Debug\net10.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\CSUG\Desktop\fa\TmsApi\bin\Debug\net10.0\Microsoft.OpenApi.dll
+C:\Users\CSUG\Desktop\fa\TmsApi\obj\Debug\net10.0\TmsApi.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\CSUG\Desktop\fa\TmsApi\bin\Debug\net10.0\Scalar.AspNetCore.dll
