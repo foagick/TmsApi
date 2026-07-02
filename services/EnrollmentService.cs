@@ -26,7 +26,12 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         };
         context.Enrollments.Add(enrollment);
         await context.SaveChangesAsync(ct);
-        return await GetByIdAsync(courseId, enrollment.Id, ct);
+
+        logger.LogInformation("Created enrollment {EnrollmentId} for student {StudentId} in course {CourseId}",
+            enrollment.Id, enrollment.StudentId, enrollment.CourseId);
+
+        return await GetByIdAsync(courseId, enrollment.Id, ct)
+            ?? throw new InvalidOperationException("Enrollment was not found after creation.");
 
     }
 }

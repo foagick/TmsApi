@@ -13,6 +13,7 @@ builder.Services.AddControllers();
 // Register services
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 
@@ -38,6 +39,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -55,8 +57,6 @@ courseCode = "CS-101",
 studentId = "S-001",
 letterGrade = "A"
 }));
-app.UseAuthentication();
-app.UseAuthorization();
 
 
 // Seed test data at startup
