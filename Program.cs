@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Tms.Api.Persistence;
 using Tms.Api.Services;
 using TmsApi.Data;
 using TmsApi.Entities;
@@ -47,8 +48,13 @@ app.MapControllers();
 
 if (app.Environment.IsDevelopment())
     {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+        await DataSeeder.SeedAsync(context);
+
+        app.MapOpenApi();
+        app.MapScalarApiReference();
+
     }
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
@@ -102,7 +108,7 @@ using (var scope = app.Services.CreateScope())
             new() { StudentId = students[1].Id, CourseId = courses[0].Id, Grade = 2.8m },
             new() { StudentId = students[3].Id, CourseId = courses[1].Id, Grade = 3.9m }
             };
-            
+
         context.Enrollments.AddRange(enrollments);
         context.SaveChanges();
             }
