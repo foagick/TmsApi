@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using Tms.Api.Services;
 using TmsApi.Data;
 using TmsApi.Entities;
 
@@ -10,8 +12,13 @@ builder.Services.AddControllers();
 
 // Register services
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 // Register TmsDbContext scoped for incoming HTTP requests
 builder.Services.AddDbContext<TmsDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
@@ -23,16 +30,26 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 // Configure the HTTP request pipeline.
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
+
+if (app.Environment.IsDevelopment())
+{
+app.MapOpenApi();
+app.MapScalarApiReference();
+}
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
@@ -40,8 +57,6 @@ courseCode = "CS-101",
 studentId = "S-001",
 letterGrade = "A"
 }));
-app.UseAuthentication();
-app.UseAuthorization();
 
 
 // Seed test data at startup
@@ -70,9 +85,9 @@ context.Students.AddRange(students);
 var courses = new List<Course>
 {
 
-new() { Code = "CS-101", Title = "Introduction to ComputerScience", Capacity = 30 },
-new() { Code = "CS-201", Title = "Data Structures and Algorithms", Capacity = 25 },
-new() { Code = "MAT-101", Title = "Calculus I", Capacity = 40 }
+new() { Code = "CS-101", Title = "Introduction to ComputerScience", MaxCapacity = 30 },
+new() { Code = "CS-201", Title = "Data Structures and Algorithms", MaxCapacity = 25 },
+new() { Code = "MAT-101", Title = "Calculus I", MaxCapacity = 40 }
 
 };
 

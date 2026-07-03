@@ -7,8 +7,10 @@ public required string RegistrationNumber { get; set; } // natural key — human
 public required string Name { get; set; }
 public decimal GPA { get; set; }
 public bool IsActive { get; set; } = true;
+// Concurrency + Soft Delete
+    public byte[] RowVersion { get; set; } = null!;
+    public bool IsDeleted { get; set; } = false;
 // Navigation property for many-to-many relationship
 public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
-public ICollection<Assessment> Assignments { get; set; } = new List<Assessment>();
 public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 }
