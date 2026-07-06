@@ -51,12 +51,26 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
 
         public async Task<PagedResponse<CourseResponseDto>> GetCoursesAsync(PagedRequest request, CancellationToken ct)
         {
-            var query = context.Courses.AsNoTracking();
+            IQueryable<Course> query = context.Courses.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var searchPattern = $"%{request.Search}%";
+                query = query.Where(c =>
+                    EF.Functions.ILike(c.Title, searchPattern) ||
+                    EF.Functions.ILike(c.Code, searchPattern));
+            }
 
             var totalCount = await query.CountAsync(ct);
 
-            var items = await query
-                .OrderBy(c => c.Id)
+            var sortedQuery = request.OrderBy switch
+            {
+                "Code" => request.Descending ? query.OrderByDescending(c => c.Code) : query.OrderBy(c => c.Code),
+                "MaxCapacity" => request.Descending ? query.OrderByDescending(c => c.MaxCapacity) : query.OrderBy(c => c.MaxCapacity),
+                _ => request.Descending ? query.OrderByDescending(c => c.Title) : query.OrderBy(c => c.Title),
+            };
+
+            var items = await sortedQuery
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .Select(c => new CourseResponseDto(c.Id, c.Code, c.Title, c.MaxCapacity, c.Enrollments.Count))
