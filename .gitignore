@@ -1,0 +1,26 @@
+# .NET build artifacts
+bin/
+obj/
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local app settings
+appsettings.Development.json
+appsettings.Local.json
+
+# Logs
+*.log
+
+# NuGet packages
+*.nupkg
+packages/
+
+# OS files
+.DS_Store
+Thumbs.db
