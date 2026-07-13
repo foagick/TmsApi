@@ -25,7 +25,36 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
 
     public async Task<EnrollmentResponseDto> CreateAsync(int courseId,EnrollStudentRequest request, CancellationToken ct)
     {
+        // Validate that the student exists
+        var studentExists = await context.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == request.StudentId, ct);
         
+        if (!studentExists)
+        {
+            throw new KeyNotFoundException($"Student with ID {request.StudentId} not found.");
+        }
+
+        // Validate that the course exists
+        var courseExists = await context.Courses
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == courseId, ct);
+        
+        if (!courseExists)
+        {
+            throw new KeyNotFoundException($"Course with ID {courseId} not found.");
+        }
+
+        // Check if student is already enrolled in the course
+        var alreadyEnrolled = await context.Enrollments
+            .AsNoTracking()
+            .AnyAsync(e => e.StudentId == request.StudentId && e.CourseId == courseId, ct);
+        
+        if (alreadyEnrolled)
+        {
+            throw new InvalidOperationException($"Student {request.StudentId} is already enrolled in course {courseId}.");
+        }
+
         var enrollment = new Enrollment
         {
             CourseId = courseId,
