@@ -48,14 +48,7 @@ public class EnrollmentsController(
     [EndpointDescription("Returns 404 if the course does not exist, 409 if the course has reached MaxCapacity.")]
     public async Task<IActionResult> EnrollStudent(int courseId, EnrollStudentRequest request, CancellationToken ct)
         {
-            // TODO 3: Look up the parent course (courseService.GetByIdAsync). If null, return NotFound().
-            // Then check capacity (course.EnrollmentCount >= course.MaxCapacity).
-            // If full, return Conflict(new ProblemDetails { ... })with:
-            // Title = "Course is full"
-            // Detail = $"Course '{course.Title}' has reached its maximum capacity of {course.MaxCapacity}."
-            // Status = StatusCodes.Status409Conflict
-            // Otherwise, call enrollmentService.CreateAsync and return CreatedAtAction(nameof(GetEnrollment),
-            // new { courseId, id = enrollment.Id }, enrollment).
+            
             var course = await courseService.GetByIdAsync(courseId, ct);
             if (course is null)
             {
@@ -72,29 +65,8 @@ public class EnrollmentsController(
                 });
             }
 
-            try
-            {
                 var enrollment = await enrollmentService.CreateAsync(courseId, request, ct);
                 return CreatedAtAction(nameof(GetEnrollment), new { courseId, id = enrollment.Id }, enrollment);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new ProblemDetails
-                {
-                    Title = "Resource Not Found",
-                    Detail = ex.Message,
-                    Status = StatusCodes.Status404NotFound
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new ProblemDetails
-                {
-                    Title = "Invalid Operation",
-                    Detail = ex.Message,
-                    Status = StatusCodes.Status400BadRequest
-                });
-            }
 
         }
 
