@@ -6,6 +6,7 @@ using Tms.Api.Persistence;
 using Tms.Api.Services;
 using TmsApi.Data;
 using TmsApi.Entities;
+using TmsApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,11 @@ builder.Services.AddApiVersioning(options =>
         options.AssumeDefaultVersionWhenUnspecified = true;
         options.ReportApiVersions = true;
         options.ApiVersionReader = new UrlSegmentApiVersionReader();
+
+        //Optional: Combine multiple version readers (URL segment and custom header)
+        // options.ApiVersionReader = ApiVersionReader.Combine(
+        //     new UrlSegmentApiVersionReader(),
+        //     new HeaderApiVersionReader("x-api-version"));
     })
         .AddApiExplorer(options =>
         {
@@ -60,6 +66,8 @@ builder.Services.AddApiVersioning(options =>
 
 
 var app = builder.Build();
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 
 app.UseExceptionHandler();
