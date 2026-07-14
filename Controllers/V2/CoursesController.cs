@@ -2,7 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
-namespace TmsApi.Api.Controllers.V2;
+namespace TmsApi.Controllers.V2;
 
 
 [ApiController]

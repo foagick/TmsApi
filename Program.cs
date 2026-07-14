@@ -1,14 +1,30 @@
 using Asp.Versioning;
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using Tms.Api.Filters;
-using Tms.Api.Persistence;
-using Tms.Api.Services;
+using TmsApi.Filters;
+using TmsApi.Persistence;
+using TmsApi.Services;
+using TmsApi.ExceptionHandlers;
+using TmsApi.Behaviors;
+using TmsApi.Enrollments.Commands;
 using TmsApi.Data;
 using TmsApi.Entities;
 using TmsApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMediatR(cfg =>
+cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
+
+builder.Services.AddValidatorsFromAssembly(typeof(EnrollStudentValidator).Assembly);
+
+// LoggingBehavior FIRST—it must wrap ValidationBehavior
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add services.
 // builder.Services.AddControllers();
