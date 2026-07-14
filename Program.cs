@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Tms.Api.Filters;
@@ -34,6 +35,29 @@ options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
 builder.Services.AddAuthentication();   // minimal setup
 builder.Services.AddAuthorization();
 
+builder.Services.AddOpenApi(documentName: "v1", configureOptions: options =>
+{
+    options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
+});
+
+builder.Services.AddOpenApi(documentName: "v2", configureOptions: options =>
+{
+    options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
+});
+
+builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = new UrlSegmentApiVersionReader();
+    })
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
 var app = builder.Build();
 
 
@@ -51,15 +75,29 @@ app.UseAuthorization();
 app.MapControllers();
 
 
+// if (app.Environment.IsDevelopment())
+//     {
+//         using var scope = app.Services.CreateScope();
+//         var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+//         await DataSeeder.SeedAsync(context);
+
+//         app.MapOpenApi();
+//         app.MapScalarApiReference();
+
+//     }
+
 if (app.Environment.IsDevelopment())
     {
-        using var scope = app.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
-        await DataSeeder.SeedAsync(context);
-
         app.MapOpenApi();
-        app.MapScalarApiReference();
+        app.MapScalarApiReference(configureOptions:options =>
+        {
+            options.WithTitle ("TMS API Reference")
+            .WithTheme (ScalarTheme.DeepSpace)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 
+            options.AddDocument("v1", title: "API Version 1.0")
+            .AddDocument("v2", title: "API Version 2.0");
+        });
     }
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new

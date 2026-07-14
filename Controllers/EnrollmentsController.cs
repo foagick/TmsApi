@@ -72,8 +72,29 @@ public class EnrollmentsController(
                 });
             }
 
-            var enrollment = await enrollmentService.CreateAsync(courseId, request, ct);
-            return CreatedAtAction(nameof(GetEnrollment), new { courseId, id = enrollment.Id }, enrollment);
+            try
+            {
+                var enrollment = await enrollmentService.CreateAsync(courseId, request, ct);
+                return CreatedAtAction(nameof(GetEnrollment), new { courseId, id = enrollment.Id }, enrollment);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Resource Not Found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid Operation",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
 
         }
 
