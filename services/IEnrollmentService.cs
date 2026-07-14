@@ -1,4 +1,5 @@
 using TmsApi.Dtos;
+using TmsApi.Entities;
 
 namespace TmsApi.Services;
 public interface IEnrollmentService
@@ -8,4 +9,10 @@ public interface IEnrollmentService
     Task<IReadOnlyList<EnrollmentResponseDto>> GetByCourseAsync(int courseId, CancellationToken ct);
 
     Task<EnrollmentResponseDto> CreateAsync(int courseId, EnrollStudentRequest request, CancellationToken ct);
+
+    Task<bool> ExistsAsync(int studentId, string courseCode, CancellationToken ct);
+
+    Task AddAsync(Enrollment enrollment, CancellationToken ct);
+
+    Task<IReadOnlyList<Enrollment>> GetByStudentIdAsync(int studentId, CancellationToken ct);
 }

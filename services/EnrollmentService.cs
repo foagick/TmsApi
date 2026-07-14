@@ -4,6 +4,7 @@ using TmsApi.Services;
 using TmsApi.Data;
 using TmsApi.Entities;
 
+namespace TmsApi.Services;
 public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> logger) : IEnrollmentService
 {
     public Task<EnrollmentResponseDto?> GetByIdAsync(int courseId, int id, CancellationToken ct) =>
@@ -70,5 +71,28 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         return await GetByIdAsync(courseId, enrollment.Id, ct)
             ?? throw new InvalidOperationException("Enrollment was not found after creation.");
 
+    }
+
+    public async Task<bool> ExistsAsync(int studentId, string courseCode, CancellationToken ct)
+    {
+        return await context.Enrollments
+            .AsNoTracking()
+            .AnyAsync(e => e.StudentId == studentId && e.Course.Code == courseCode, ct);
+    }
+
+    public async Task AddAsync(Enrollment enrollment, CancellationToken ct)
+    {
+        context.Enrollments.Add(enrollment);
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Enrollment>> GetByStudentIdAsync(int studentId, CancellationToken ct)
+    {
+        return await context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.StudentId == studentId)
+            .Include(e => e.Course)
+            .OrderBy(e => e.EnrolledAt)
+            .ToListAsync(ct);
     }
 }

@@ -87,5 +87,11 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
 
     public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
     context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
+
+    public Task<Course?> GetByCodeAsync(string code, CancellationToken ct) =>
+        context.Courses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+            .FirstOrDefaultAsync(c => c.Code == code, ct);
     
 }
