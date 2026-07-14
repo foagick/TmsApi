@@ -9,41 +9,41 @@ using TmsApi.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Add services.
 // builder.Services.AddControllers();
 builder.Services.AddControllers(options =>
-{
-options.Filters.Add<AuditLogFilter>();
-});
+    {
+    options.Filters.Add<AuditLogFilter>();
+    });
 
 // Register services
+// builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
-// builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 // Register TmsDbContext scoped for incoming HTTP requests
 builder.Services.AddDbContext<TmsDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
-.LogTo(Console.WriteLine, LogLevel.Information) // Log SQL to output window
-.EnableSensitiveDataLogging()); // Show parameters in querylogs (dev only)
+    options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
+            .LogTo(Console.WriteLine, LogLevel.Information)
+            .EnableSensitiveDataLogging());
 
-builder.Services.AddAuthentication();   // minimal setup
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
+// Add API versioning
 builder.Services.AddOpenApi(documentName: "v1", configureOptions: options =>
-{
-    options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
-});
+    {
+        options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
+    });
 
 builder.Services.AddOpenApi(documentName: "v2", configureOptions: options =>
-{
-    options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
-});
+    {
+        options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
+    });
 
 builder.Services.AddApiVersioning(options =>
     {
@@ -58,20 +58,17 @@ builder.Services.AddApiVersioning(options =>
             options.SubstituteApiVersionInUrl = true;
         });
 
+
 var app = builder.Build();
 
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 // Configure the HTTP request pipeline.
-
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 
