@@ -12,7 +12,6 @@ public class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbContext(op
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Automatically apply all IEntityTypeConfiguration<T> classes
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(TmsDbContext).Assembly);
         }
 

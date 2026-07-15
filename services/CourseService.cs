@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Tms.Api.Dtos;
+using TmsApi.Dtos;
 using TmsApi.Data;
 using TmsApi.Entities;
-namespace Tms.Api.Services;
+namespace TmsApi.Services;
 public class CourseService(TmsDbContext context, ILogger<CourseService>logger) : ICourseService
 {
     // public async Task<Course?> GetByIdAsync(int id, CancellationToken ct)
@@ -87,5 +87,11 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
 
     public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
     context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
+
+    public Task<Course?> GetByCodeAsync(string code, CancellationToken ct) =>
+        context.Courses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+            .FirstOrDefaultAsync(c => c.Code == code, ct);
     
 }

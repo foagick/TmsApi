@@ -2,12 +2,15 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
-namespace TmsApi.Api.Controllers.V1;
+namespace TmsApi.Controllers.V1;
+
+
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("1.0")]
 public class CoursesController(TmsDbContext context) : ControllerBase
     {
+        
     [HttpGet]
     public async Task<IActionResult> GetCourses(
 
@@ -24,25 +27,25 @@ public class CoursesController(TmsDbContext context) : ControllerBase
                 .Skip((page- 1) * pageSize)
                 .Take(pageSize)
                 .Select(c => new
-                        {
-                            c.Id,
-                            c.Code,
-                            c.Title,
-                            c.MaxCapacity,
-                            EnrollmentCount = c.Enrollments.Count
-                        })
+                    {
+                        c.Id,
+                        c.Code,
+                        c.Title,
+                        c.MaxCapacity,
+                        EnrollmentCount = c.Enrollments.Count
+                    })
                         .ToListAsync(ct);
                         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                        return Ok(new
-                            {
-                                items,
-                                totalCount,
-                                page,
-                                pageSize,
-                                totalPages,
-                                hasNext = page < totalPages,
-                                hasPrevious = page > 1
-                            });
+            return Ok(new
+                {
+                    items,
+                    totalCount,
+                    page,
+                    pageSize,
+                    totalPages,
+                    hasNext = page < totalPages,
+                    hasPrevious = page > 1
+                });
         }
     }

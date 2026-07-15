@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Tms.Api.Dtos;
+using TmsApi.Dtos;
 using TmsApi.Data;
 using TmsApi.Entities;
 
-namespace Tms.Api.Services;
+namespace TmsApi.Services;
 public class StudentService(TmsDbContext context, ILogger<StudentService> logger) : IStudentService
 {
     public Task<StudentResponseDto?> GetByIdAsync(int id, CancellationToken ct) =>

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Tms.Api.Dtos;
-using Tms.Api.Services;
+using TmsApi.Dtos;
+using TmsApi.Services;
 
 [ApiController]
 [Route("api/courses/{courseId:int}/enrollments")]
@@ -48,14 +48,7 @@ public class EnrollmentsController(
     [EndpointDescription("Returns 404 if the course does not exist, 409 if the course has reached MaxCapacity.")]
     public async Task<IActionResult> EnrollStudent(int courseId, EnrollStudentRequest request, CancellationToken ct)
         {
-            // TODO 3: Look up the parent course (courseService.GetByIdAsync). If null, return NotFound().
-            // Then check capacity (course.EnrollmentCount >= course.MaxCapacity).
-            // If full, return Conflict(new ProblemDetails { ... })with:
-            // Title = "Course is full"
-            // Detail = $"Course '{course.Title}' has reached its maximum capacity of {course.MaxCapacity}."
-            // Status = StatusCodes.Status409Conflict
-            // Otherwise, call enrollmentService.CreateAsync and return CreatedAtAction(nameof(GetEnrollment),
-            // new { courseId, id = enrollment.Id }, enrollment).
+            
             var course = await courseService.GetByIdAsync(courseId, ct);
             if (course is null)
             {
