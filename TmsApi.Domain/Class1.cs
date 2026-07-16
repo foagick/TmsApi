@@ -1,6 +1,7 @@
-﻿namespace TmsApi.Domain;
-
-public class Class1
+﻿namespace TmsApi.Domain
 {
+    public class Class1
+    {
 
+    }
 }
