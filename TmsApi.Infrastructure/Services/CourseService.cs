@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using TmsApi.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using TmsApi.Application.DTOs;
+using TmsApi.Application.Services;
+using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.Persistence;
 
-namespace TmsApi.Infrastructure.Persistence;
+namespace TmsApi.Infrastructure.Services;
 public class CourseService(TmsDbContext context, ILogger<CourseService>logger) : ICourseService
 {
     // public async Task<Course?> GetByIdAsync(int id, CancellationToken ct)

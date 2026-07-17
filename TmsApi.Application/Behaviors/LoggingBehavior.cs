@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
-namespace TmsApi.Behaviors;
+
+namespace TmsApi.Application.Behaviors;
 public class LoggingBehavior<TRequest, TResponse> (
     ILogger<LoggingBehavior<TRequest, TResponse>> logger)
 : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull

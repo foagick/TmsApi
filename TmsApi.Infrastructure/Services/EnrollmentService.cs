@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using TmsApi.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using TmsApi.Application.DTOs;
+using TmsApi.Application.Services;
+using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.Persistence;
 
-namespace TmsApi.Infrastructure.Persistence;
+namespace TmsApi.Infrastructure.Services;
 public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> logger) : IEnrollmentService
 {
     public Task<EnrollmentResponseDto?> GetByIdAsync(int courseId, int id, CancellationToken ct) =>

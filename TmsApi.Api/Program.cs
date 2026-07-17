@@ -3,26 +3,19 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using TmsApi.Filters;
-using TmsApi.Persistence;
-// using TmsApi.Services;
+using TmsApi.Api.ExceptionHandlers;
+using TmsApi.Api.Filters;
+using TmsApi.Api.Middleware;
+using TmsApi.Application.Behaviors;
+using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Services;
-using TmsApi.Application.Interfaces;
-using TmsApi.ExceptionHandlers;
-using TmsApi.Behaviors;
-using TmsApi.Enrollments.Commands;
-using TmsApi.Data;
-// using TmsApi.Entities;
-using TmsApi.Domain.Entities;
-using TmsApi.Middleware;
-
 using TmsApi.Infrastructure.Persistence;
-// namespace TmsApi.Infrastructure.Persistence;
+using TmsApi.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMediatR(cfg =>
-cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
+    cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
 builder.Services.AddValidatorsFromAssembly(typeof(EnrollStudentValidator).Assembly);
 
@@ -34,10 +27,7 @@ builder.Services.AddProblemDetails();
 
 // Add services.
 // builder.Services.AddControllers();
-builder.Services.AddControllers(options =>
-    {
-    options.Filters.Add<AuditLogFilter>();
-    });
+builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>(); });
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
@@ -50,7 +40,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<TmsDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
 
 // Register TmsDbContext scoped for incoming HTTP requests
 // builder.Services.AddDbContext<TmsDbContext>(options =>
@@ -62,15 +52,11 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 // Add API versioning
-builder.Services.AddOpenApi(documentName: "v1", configureOptions: options =>
-    {
-        options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
-    });
+builder.Services.AddOpenApi(documentName: "v1",
+    configureOptions: options => { options.ShouldInclude = descriptor => descriptor.GroupName == "v1"; });
 
-builder.Services.AddOpenApi(documentName: "v2", configureOptions: options =>
-    {
-        options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
-    });
+builder.Services.AddOpenApi(documentName: "v2",
+    configureOptions: options => { options.ShouldInclude = descriptor => descriptor.GroupName == "v2"; });
 
 builder.Services.AddApiVersioning(options =>
     {
@@ -84,11 +70,11 @@ builder.Services.AddApiVersioning(options =>
         //     new UrlSegmentApiVersionReader(),
         //     new HeaderApiVersionReader("x-api-version"));
     })
-        .AddApiExplorer(options =>
-        {
-            options.GroupNameFormat = "'v'VVV";
-            options.SubstituteApiVersionInUrl = true;
-        });
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
 
 
 var app = builder.Build();
@@ -118,25 +104,25 @@ app.MapControllers();
 //     }
 
 if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference(configureOptions: options =>
     {
-        app.MapOpenApi();
-        app.MapScalarApiReference(configureOptions:options =>
-        {
-            options.WithTitle ("TMS API Reference")
-            .WithTheme (ScalarTheme.DeepSpace)
+        options.WithTitle("TMS API Reference")
+            .WithTheme(ScalarTheme.DeepSpace)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 
-            options.AddDocument("v1", title: "API Version 1.0")
+        options.AddDocument("v1", title: "API Version 1.0")
             .AddDocument("v2", title: "API Version 2.0");
-        });
-    }
+    });
+}
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
-    {
+{
     courseCode = "CS-101",
     studentId = "S-001",
     letterGrade = "A"
-    }));
+}));
 
 
 // Seed test data at startup

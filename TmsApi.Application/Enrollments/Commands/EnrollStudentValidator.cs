@@ -1,5 +1,6 @@
 using FluentValidation;
-namespace TmsApi.Enrollments.Commands;
+
+namespace TmsApi.Application.Enrollments.Commands;
 public class EnrollStudentValidator : AbstractValidator<EnrollStudentCommand>
     {
         public EnrollStudentValidator()
