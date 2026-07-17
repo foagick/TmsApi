@@ -1,6 +1,6 @@
-using Tms.Api.Dtos;
+using TmsApi.Dtos;
 
-namespace Tms.Api.Services;
+namespace TmsApi.Services;
 public interface IStudentService
 {
     Task<StudentResponseDto?> GetByIdAsync(int id, CancellationToken ct);

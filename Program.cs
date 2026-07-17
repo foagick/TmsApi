@@ -1,49 +1,66 @@
 using Asp.Versioning;
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using Tms.Api.Filters;
-using Tms.Api.Persistence;
-using Tms.Api.Services;
+using TmsApi.Filters;
+using TmsApi.Persistence;
+using TmsApi.Services;
+using TmsApi.ExceptionHandlers;
+using TmsApi.Behaviors;
+using TmsApi.Enrollments.Commands;
 using TmsApi.Data;
 using TmsApi.Entities;
+using TmsApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddMediatR(cfg =>
+cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
+builder.Services.AddValidatorsFromAssembly(typeof(EnrollStudentValidator).Assembly);
+
+// LoggingBehavior FIRST—it must wrap ValidationBehavior
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Add services.
 // builder.Services.AddControllers();
 builder.Services.AddControllers(options =>
-{
-options.Filters.Add<AuditLogFilter>();
-});
+    {
+    options.Filters.Add<AuditLogFilter>();
+    });
 
 // Register services
+// builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
-// builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 // Register TmsDbContext scoped for incoming HTTP requests
 builder.Services.AddDbContext<TmsDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
-.LogTo(Console.WriteLine, LogLevel.Information) // Log SQL to output window
-.EnableSensitiveDataLogging()); // Show parameters in querylogs (dev only)
+    options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
+            .LogTo(Console.WriteLine, LogLevel.Information)
+            .EnableSensitiveDataLogging());
 
-builder.Services.AddAuthentication();   // minimal setup
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
+// Add API versioning
 builder.Services.AddOpenApi(documentName: "v1", configureOptions: options =>
-{
-    options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
-});
+    {
+        options.ShouldInclude = descriptor => descriptor.GroupName == "v1";
+    });
 
 builder.Services.AddOpenApi(documentName: "v2", configureOptions: options =>
-{
-    options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
-});
+    {
+        options.ShouldInclude = descriptor => descriptor.GroupName == "v2";
+    });
 
 builder.Services.AddApiVersioning(options =>
     {
@@ -51,6 +68,11 @@ builder.Services.AddApiVersioning(options =>
         options.AssumeDefaultVersionWhenUnspecified = true;
         options.ReportApiVersions = true;
         options.ApiVersionReader = new UrlSegmentApiVersionReader();
+
+        //Optional: Combine multiple version readers (URL segment and custom header)
+        // options.ApiVersionReader = ApiVersionReader.Combine(
+        //     new UrlSegmentApiVersionReader(),
+        //     new HeaderApiVersionReader("x-api-version"));
     })
         .AddApiExplorer(options =>
         {
@@ -58,20 +80,19 @@ builder.Services.AddApiVersioning(options =>
             options.SubstituteApiVersionInUrl = true;
         });
 
+
 var app = builder.Build();
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 // Configure the HTTP request pipeline.
-
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 

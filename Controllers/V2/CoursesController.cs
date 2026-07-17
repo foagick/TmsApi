@@ -2,12 +2,15 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
-namespace TmsApi.Api.Controllers.V2;
+namespace TmsApi.Controllers.V2;
+
+
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("2.0")]
 public class CoursesController(TmsDbContext context) : ControllerBase
     {
+        
     [HttpGet]
     public async Task<IActionResult> GetCourses(
         [FromQuery] int page = 1,

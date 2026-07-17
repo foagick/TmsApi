@@ -2,15 +2,12 @@ namespace TmsApi.Entities;
 public class Student
 {
 public int Id { get; set; }
-// surrogate primary key — internal, used by foreign keys
-public required string RegistrationNumber { get; set; } // natural key — human-readable (uniqueness configured in Session 2)
+public required string RegistrationNumber { get; set; }
 public required string Name { get; set; }
 public decimal GPA { get; set; }
 public bool IsActive { get; set; } = true;
-// Concurrency + Soft Delete
-    public byte[] RowVersion { get; set; } = null!;
-    public bool IsDeleted { get; set; } = false;
-// Navigation property for many-to-many relationship
+public byte[] RowVersion { get; set; } = null!;
+public bool IsDeleted { get; set; } = false;
 public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 }
