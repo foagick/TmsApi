@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TmsApi.Application.Courses.Commands;
 using TmsApi.Application.DTOs;
 using TmsApi.Application.Services;
 using TmsApi.Domain.Entities;
@@ -96,5 +97,61 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
             .AsNoTracking()
             .Include(c => c.Enrollments)
             .FirstOrDefaultAsync(c => c.Code == code, ct);
-    
+
+    public async Task<CourseResponseDto> CreateAsync(CreateCourseCommand command, CancellationToken ct)
+    {
+        var course = new Course
+        {
+            Code = command.Code,
+            Title = command.Title,
+            MaxCapacity = command.MaxCapacity
+        };
+        context.Courses.Add(course);
+        await context.SaveChangesAsync(ct);
+        logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
+        return (await GetByIdAsync(course.Id, ct))!;
+    }
+
+    public Task<List<Course>> GetAllAsync(CancellationToken ct)
+    {
+        return context.Courses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+            .ToListAsync(ct);
+    }
+
+    public Task UpdateAsync(UpdateCourseCommand command, CancellationToken ct) 
+    {
+        var course = new Course
+        {
+            Id = command.Id,
+            Code = command.Code,
+            Title = command.Title,
+            MaxCapacity = command.MaxCapacity
+        };
+        context.Courses.Update(course);
+        return context.SaveChangesAsync(ct);
+    }
+
+    public Task DeleteAsync(int id, CancellationToken ct)
+    {
+        var course = new Course { Id = id };
+        context.Courses.Remove(course);
+        return context.SaveChangesAsync(ct);
+    }
+
+    public Task<List<Course>> SearchAsync(string? term, CancellationToken ct) 
+    {
+        IQueryable<Course> query = context.Courses.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(term))
+        {
+            var searchPattern = $"%{term}%";
+            query = query.Where(c =>
+                EF.Functions.ILike(c.Title, searchPattern) ||
+                EF.Functions.ILike(c.Code, searchPattern));
+        }
+
+        return query.ToListAsync(ct);
+    }
 }
