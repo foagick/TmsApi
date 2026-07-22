@@ -1,68 +1,67 @@
 using Asp.Versioning;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TmsApi.Infrastructure.Persistence;
+using Microsoft.AspNetCore.RateLimiting;
+using TmsApi.Application.Courses.Commands;
+using TmsApi.Application.Courses.Queries;
+using TmsApi.Application.DTOs;
 
 namespace TmsApi.Api.Controllers.V2;
-
 
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("2.0")]
-public class CoursesController(TmsDbContext context) : ControllerBase
-    {
-        
+public class CoursesController(IMediator mediator) : ControllerBase
+{
     [HttpGet]
-    public async Task<IActionResult> GetCourses(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken ct = default
-        ){
-            page = Math.Max(1, page);
-            pageSize = Math.Clamp(pageSize, 1, 50);
-            var baseQuery = context.Courses.AsNoTracking();
-            var totalCount = await baseQuery.CountAsync(ct);
-            var rows = await baseQuery
-            .OrderBy(c => c.Title)
-            .Skip((page- 1) * pageSize)
-            .Take(pageSize)
-            .Select(c => new
-                {
-                    c.Id,
-                    c.Title,
-                    c.Code,
-                    c.MaxCapacity,
-                    EnrollmentCount = c.Enrollments.Count
-                })
-                    .ToListAsync(ct);
-                    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-                    var hasNext = page < totalPages;
-                    var hasPrevious = page > 1;
-                        return Ok(new
-                            {
-                                data = rows,
-                                meta = new
-                                {
-                                    totalCount,
-                                    page,
-                                    pageSize,
-                                    totalPages,
-                                    hasNext,
-                                    hasPrevious
-                                },
-                                    links = new
-                                {
-                                    self = $"/api/v2/courses?page={page}&pageSize={pageSize}",
-                                    next = hasNext ? $"/api/v2/courses?page={page + 1}&pageSize={pageSize}" : (string?)null,
-                                    prev = hasPrevious ? $"/api/v2/courses?page={page- 1}&pageSize={pageSize}" : (string?)null,
-                                    enroll = "/api/v2/enrollments"
-                                }
-                            });
-        }
+    public async Task<IActionResult> GetCourses(CancellationToken ct)
+    {
+        var courses = await mediator.Send(new GetAllCoursesQuery(), ct);
+        return Ok(courses);
     }
 
+    [HttpGet("search")]
+    [EnableRateLimiting("search")]
+    public async Task<IActionResult> SearchCourses(
+        [FromQuery] string? term,
+        CancellationToken ct)
+    {
+        var results = await mediator.Send(new SearchCoursesQuery(term), ct);
+        return Ok(results);
+    }
 
-    // What's the layered architecture?  
-    // what's layered architecture?
-    // what's clear architecture?
+    [HttpGet("{code}")]
+    public async Task<IActionResult> GetCourseByCode(string code, CancellationToken ct)
+    {
+        var course = await mediator.Send(new GetCourseByCodeQuery(code), ct);
+        return Ok(course);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateCourse(
+        int id,
+        UpdateCourseRequest request,
+        CancellationToken ct)
+    {
+        await mediator.Send(new UpdateCourseCommand(id, request.Title, request.Code, request.MaxCapacity), ct);
+        return NoContent();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateCourse(
+        CreateCourseRequest request,
+        CancellationToken ct)
+    {
+        var id = await mediator.Send(
+            new CreateCourseCommand(request.Code, request.Title, request.MaxCapacity),
+            ct);
+        return CreatedAtAction(nameof(GetCourseByCode), new { code = request.Code }, new { id });
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteCourse(int id, CancellationToken ct)
+    {
+        await mediator.Send(new DeleteCourseCommand(id), ct);
+        return NoContent();
+    }
+}
