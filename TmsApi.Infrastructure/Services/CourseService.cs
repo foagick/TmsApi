@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TmsApi.Application.Common;
 using TmsApi.Application.Courses.Commands;
 using TmsApi.Application.DTOs;
 using TmsApi.Application.Services;
@@ -40,13 +41,14 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
     //     }
 
     public async Task<CourseResponseDto> CreateAsync(CreateCourseRequest request, CancellationToken ct)
+    {
+        var course = new Course
         {
-            var course = new Course
-            {
                 Code = request.Code,
                 Title = request.Title,
                 MaxCapacity = request.MaxCapacity
-            };
+        };
+
             context.Courses.Add(course);
             await context.SaveChangesAsync(ct);
             logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
@@ -117,32 +119,38 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
         return context.Courses
             .AsNoTracking()
             .Include(c => c.Enrollments)
+            .OrderBy(c => c.Title)
             .ToListAsync(ct);
     }
-
-    public Task UpdateAsync(UpdateCourseCommand command, CancellationToken ct) 
+    public async Task UpdateAsync(UpdateCourseCommand command, CancellationToken ct)
     {
-        var course = new Course
-        {
-            Id = command.Id,
-            Code = command.Code,
-            Title = command.Title,
-            MaxCapacity = command.MaxCapacity
-        };
-        context.Courses.Update(course);
-        return context.SaveChangesAsync(ct);
+        var course = await context.Courses.FindAsync([command.Id], ct)
+            ?? throw new NotFoundException($"Course {command.Id} not found.");
+
+        if (command.Title is not null)
+            course.Title = command.Title;
+
+        if (command.Code is not null)
+            course.Code = command.Code;
+
+        if (command.MaxCapacity is not null)
+            course.MaxCapacity = command.MaxCapacity.Value;
+
+        await context.SaveChangesAsync(ct);
     }
 
-    public Task DeleteAsync(int id, CancellationToken ct)
+    public async Task DeleteAsync(int id, CancellationToken ct)
     {
-        var course = new Course { Id = id };
+        var course = await context.Courses.FindAsync([id], ct)
+            ?? throw new NotFoundException($"Course {id} not found.");
+
         context.Courses.Remove(course);
-        return context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(ct);
     }
 
-    public Task<List<Course>> SearchAsync(string? term, CancellationToken ct) 
+    public Task<List<Course>> SearchAsync(string? term, CancellationToken ct)
     {
-        IQueryable<Course> query = context.Courses.AsNoTracking();
+        IQueryable<Course> query = context.Courses.AsNoTracking().Include(c => c.Enrollments);
 
         if (!string.IsNullOrWhiteSpace(term))
         {
@@ -152,6 +160,6 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
                 EF.Functions.ILike(c.Code, searchPattern));
         }
 
-        return query.ToListAsync(ct);
+        return query.OrderBy(c => c.Title).ToListAsync(ct);
     }
 }
