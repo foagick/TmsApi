@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TmsApi.Application.Common;
+using TmsApi.Application.Courses.Commands;
 using TmsApi.Application.DTOs;
 using TmsApi.Application.Services;
 using TmsApi.Domain.Entities;
@@ -17,8 +19,8 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
     //         throw new NotImplementedException();
     //     }
 
-    public Task<CourseResponseDto?> GetByIdAsync(
-        int id, CancellationToken ct) => 
+        public Task<CourseResponseDto?> GetByIdAsync(
+            int id, CancellationToken ct) => 
         context.Courses
         .AsNoTracking()
         .Where(c => c.Id == id)
@@ -38,19 +40,34 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
     //         throw new NotImplementedException();
     //     }
 
-    public async Task<CourseResponseDto> CreateAsync(CreateCourseRequest request, CancellationToken ct)
+        public async Task<CourseResponseDto> CreateAsync(CreateCourseRequest request, CancellationToken ct)
+    {
+        var course = new Course
         {
-            var course = new Course
-            {
                 Code = request.Code,
                 Title = request.Title,
                 MaxCapacity = request.MaxCapacity
-            };
+        };
+
             context.Courses.Add(course);
             await context.SaveChangesAsync(ct);
             logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
             return (await GetByIdAsync(course.Id, ct))!;
         }
+
+        public async Task<CourseResponseDto> CreateAsync(CreateCourseCommand command, CancellationToken ct)
+    {
+        var course = new Course
+        {
+            Code = command.Code,
+            Title = command.Title,
+            MaxCapacity = command.MaxCapacity
+        };
+        context.Courses.Add(course);
+        await context.SaveChangesAsync(ct);
+        logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
+        return (await GetByIdAsync(course.Id, ct))!;
+    }
 
         public async Task<PagedResponse<CourseResponseDto>> GetCoursesAsync(PagedRequest request, CancellationToken ct)
         {
@@ -88,13 +105,62 @@ public class CourseService(TmsDbContext context, ILogger<CourseService>logger) :
             };
         }
 
-    public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
-    context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
+        public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
+        context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
 
-    public Task<Course?> GetByCodeAsync(string code, CancellationToken ct) =>
-        context.Courses
-            .AsNoTracking()
-            .Include(c => c.Enrollments)
-            .FirstOrDefaultAsync(c => c.Code == code, ct);
-    
+        public Task<Course?> GetByCodeAsync(string code, CancellationToken ct) =>
+            context.Courses
+                .AsNoTracking()
+                .Include(c => c.Enrollments)
+                .FirstOrDefaultAsync(c => c.Code == code, ct);
+
+        public Task<List<Course>> GetAllAsync(CancellationToken ct)
+        {
+            return context.Courses
+                .AsNoTracking()
+                .Include(c => c.Enrollments)
+                .OrderBy(c => c.Title)
+                .ToListAsync(ct);
+        }
+        
+        public async Task UpdateAsync(UpdateCourseCommand command, CancellationToken ct)
+        {
+            var course = await context.Courses.FindAsync([command.Id], ct)
+                ?? throw new NotFoundException($"Course {command.Id} not found.");
+
+            if (command.Title is not null)
+                course.Title = command.Title;
+
+            if (command.Code is not null)
+                course.Code = command.Code;
+
+            if (command.MaxCapacity is not null)
+                course.MaxCapacity = command.MaxCapacity.Value;
+
+            await context.SaveChangesAsync(ct);
+        }
+
+        public async Task DeleteAsync(int id, CancellationToken ct)
+        {
+            var course = await context.Courses.FindAsync([id], ct)
+                ?? throw new NotFoundException($"Course {id} not found.");
+
+            context.Courses.Remove(course);
+            await context.SaveChangesAsync(ct);
+        }
+
+        public Task<List<Course>> SearchAsync(string? term, CancellationToken ct)
+    {
+        IQueryable<Course> query = context.Courses.AsNoTracking().Include(c => c.Enrollments);
+
+        if (!string.IsNullOrWhiteSpace(term))
+        {
+            var searchPattern = $"%{term}%";
+            query = query.Where(c =>
+                EF.Functions.ILike(c.Title, searchPattern) ||
+                EF.Functions.ILike(c.Code, searchPattern));
+        }
+
+        return query.OrderBy(c => c.Title).ToListAsync(ct);
+    }
 }

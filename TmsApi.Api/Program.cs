@@ -2,6 +2,7 @@ using Asp.Versioning;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
@@ -34,6 +35,7 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
 
 
 builder.Services.AddProblemDetails();
@@ -74,6 +76,16 @@ builder.Services.AddApiVersioning(options =>
     {
         options.GroupNameFormat = "'v'VVV";
         options.SubstituteApiVersionInUrl = true;
+    });
+
+
+    builder.Services.AddHybridCache(options => 
+    { 
+        options.DefaultEntryOptions = new HybridCacheEntryOptions 
+        { 
+            Expiration = TimeSpan.FromMinutes(10), 
+            LocalCacheExpiration = TimeSpan.FromMinutes(2) 
+        }; 
     });
 
 
