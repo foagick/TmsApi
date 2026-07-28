@@ -174,10 +174,21 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAngular", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    });
+
 var app = builder.Build();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
 
+app.UseCors("AllowAngular");
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
