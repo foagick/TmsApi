@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Asp.Versioning;
 using FluentValidation;
 using MediatR;
@@ -14,8 +15,11 @@ using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Behaviors;
 using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Services;
+using TmsApi.Application.Transcripts;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
+using TmsApi.Infrastructure.Transcripts;
+using TmsApi.Infrastructure.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +33,8 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavi
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddHostedService<TranscriptWorker>();
+
 
 builder.Services.AddHybridCache(options =>
 {
@@ -52,6 +58,7 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+builder.Services.AddSingleton < ITranscriptStatusStore, InMemoryTranscriptStatusStore > ();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -183,6 +190,12 @@ builder.Services.AddApiVersioning(options =>
                   .AllowAnyHeader();
         });
     });
+
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
+    new BoundedChannelOptions(100)
+    {
+        FullMode = BoundedChannelFullMode.Wait
+    }));
 
 var app = builder.Build();
 
