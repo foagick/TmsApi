@@ -10,10 +10,13 @@ using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
+using TmsApi.Api.Hubs;
 using TmsApi.Api.Middleware;
+using TmsApi.Api.Notifications;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Behaviors;
 using TmsApi.Application.Enrollments.Commands;
+using TmsApi.Application.Notifications;
 using TmsApi.Application.Services;
 using TmsApi.Application.Transcripts;
 using TmsApi.Infrastructure.Persistence;
@@ -34,6 +37,7 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHostedService<TranscriptWorker>();
+builder.Services.AddSignalR();
 
 
 builder.Services.AddHybridCache(options =>
@@ -59,6 +63,7 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
 builder.Services.AddSingleton < ITranscriptStatusStore, InMemoryTranscriptStatusStore > ();
+builder.Services.AddSingleton < ITranscriptNotificationService, SignalRTranscriptNotificationService > ();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -210,6 +215,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<TmsHub>("/hubs/tms");
 
 app.MapHealthChecks("/health/live").DisableRateLimiting();
 app.MapHealthChecks("/health/ready").DisableRateLimiting();
