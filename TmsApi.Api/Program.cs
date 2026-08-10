@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Asp.Versioning;
 using FluentValidation;
 using MediatR;
@@ -9,13 +10,19 @@ using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
+using TmsApi.Api.Hubs;
 using TmsApi.Api.Middleware;
+using TmsApi.Api.Notifications;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Behaviors;
 using TmsApi.Application.Enrollments.Commands;
+using TmsApi.Application.Notifications;
 using TmsApi.Application.Services;
+using TmsApi.Application.Transcripts;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
+using TmsApi.Infrastructure.Transcripts;
+using TmsApi.Infrastructure.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +36,9 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavi
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddHostedService<TranscriptWorker>();
+builder.Services.AddSignalR();
+
 
 builder.Services.AddHybridCache(options =>
 {
@@ -52,6 +62,8 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+builder.Services.AddSingleton < ITranscriptStatusStore, InMemoryTranscriptStatusStore > ();
+builder.Services.AddSingleton < ITranscriptNotificationService, SignalRTranscriptNotificationService > ();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -174,10 +186,27 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAngular", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    });
+
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
+    new BoundedChannelOptions(100)
+    {
+        FullMode = BoundedChannelFullMode.Wait
+    }));
+
 var app = builder.Build();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
 
+app.UseCors("AllowAngular");
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
@@ -186,6 +215,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<TmsHub>("/hubs/tms");
 
 app.MapHealthChecks("/health/live").DisableRateLimiting();
 app.MapHealthChecks("/health/ready").DisableRateLimiting();
