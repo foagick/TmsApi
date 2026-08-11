@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.AspNetCore.Antiforgery;
 using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 using TmsApi.Api.ExceptionHandlers;
@@ -207,6 +208,11 @@ builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
         FullMode = BoundedChannelFullMode.Wait
     }));
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
@@ -245,6 +251,25 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
     studentId = "S-001",
     letterGrade = "A"
 }));
+
+app.Use(async (context, next) =>
+{
+if (context.User.Identity?.IsAuthenticated == true || context.
+Request.Cookies.ContainsKey("tms_auth"))
+{
+var antiforgery = context.RequestServices
+.GetRequiredService<IAntiforgery>();
+var tokens = antiforgery.GetAndStoreTokens(context);
+context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+new CookieOptions
+{
+HttpOnly = false, // MUST be false so Angular JavaScript can read it!
+Secure = !builder.Environment.IsDevelopment(),
+SameSite = SameSiteMode.Strict
+});
+}
+await next(context);
+});
 
 
 // Seed test data at startup
