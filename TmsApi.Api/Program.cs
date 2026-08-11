@@ -186,13 +186,18 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
+    var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
+
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("AllowAngular", policy =>
+        options.AddPolicy("TmsClient", policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowCredentials()
+                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
         });
     });
 
@@ -206,7 +211,7 @@ var app = builder.Build();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
 
-app.UseCors("AllowAngular");
+app.UseCors("TmsClient");
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
