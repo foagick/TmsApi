@@ -3,11 +3,12 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace TmsApi.Application.Behaviors;
-public class LoggingBehavior<TRequest, TResponse> (
+
+public class LoggingBehavior<TRequest, TResponse>(
     ILogger<LoggingBehavior<TRequest, TResponse>> logger)
-: IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+    : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
 {
-    public async Task<TResponse> Handle (
+    public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken ct)
@@ -31,13 +32,13 @@ public class LoggingBehavior<TRequest, TResponse> (
                 "Handled {RequestName} in {ElapsedMs}ms (cid={CorrelationId})",
                 requestName, stopwatch.ElapsedMilliseconds, correlationId);
 
-                return response;
+            return response;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
             logger.LogError(ex, "Failed {RequestName} after {ElapsedMs}ms (cid={CorrelationId})",
-            requestName, stopwatch.ElapsedMilliseconds, correlationId);
+                requestName, stopwatch.ElapsedMilliseconds, correlationId);
 
             throw;
         }

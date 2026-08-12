@@ -188,17 +188,17 @@ builder.Services.AddApiVersioning(options =>
     });
 
 var allowedOrigins = builder.Configuration
-.GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
+    .GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("TmsClient", policy =>
     {
         policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials()
-              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
@@ -208,10 +208,7 @@ builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
         FullMode = BoundedChannelFullMode.Wait
     }));
 
-builder.Services.AddAntiforgery(options =>
-{
-    options.HeaderName = "X-XSRF-TOKEN";
-});
+builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"; });
 
 var app = builder.Build();
 
@@ -254,20 +251,20 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
 
 app.Use(async (context, next) =>
 {
-    if (context.User.Identity?.IsAuthenticated == true || context.
-    Request.Cookies.ContainsKey("tms_auth"))
+    if (context.User.Identity?.IsAuthenticated == true || context.Request.Cookies.ContainsKey("tms_auth"))
     {
         var antiforgery = context.RequestServices
-        .GetRequiredService<IAntiforgery>();
+            .GetRequiredService<IAntiforgery>();
         var tokens = antiforgery.GetAndStoreTokens(context);
         context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
-        new CookieOptions
-        {
-            HttpOnly = false, // MUST be false so Angular JavaScript can read it!
-            Secure = !builder.Environment.IsDevelopment(),
-            SameSite = SameSiteMode.Strict
-        });
+            new CookieOptions
+            {
+                HttpOnly = false, // MUST be false so Angular JavaScript can read it!
+                Secure = !builder.Environment.IsDevelopment(),
+                SameSite = SameSiteMode.Strict
+            });
     }
+
     await next(context);
 });
 

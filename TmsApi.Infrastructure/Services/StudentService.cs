@@ -6,6 +6,7 @@ using TmsApi.Domain.Entities;
 using TmsApi.Infrastructure.Persistence;
 
 namespace TmsApi.Infrastructure.Services;
+
 public class StudentService(TmsDbContext context, ILogger<StudentService> logger) : IStudentService
 {
     public Task<StudentResponseDto?> GetByIdAsync(int id, CancellationToken ct) =>
@@ -28,7 +29,8 @@ public class StudentService(TmsDbContext context, ILogger<StudentService> logger
         context.Students.Add(student);
         await context.SaveChangesAsync(ct);
 
-        logger.LogInformation("Created student {StudentId} ({RegistrationNumber})", student.Id, student.RegistrationNumber);
+        logger.LogInformation("Created student {StudentId} ({RegistrationNumber})", student.Id,
+            student.RegistrationNumber);
 
         return (await GetByIdAsync(student.Id, ct))!;
     }

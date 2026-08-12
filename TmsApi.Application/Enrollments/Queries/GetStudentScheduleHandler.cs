@@ -4,7 +4,7 @@ using TmsApi.Application.Services;
 namespace TmsApi.Application.Enrollments.Queries;
 
 public class GetStudentScheduleHandler(IEnrollmentService repo)
-: IRequestHandler<GetStudentScheduleQuery, ScheduleDto>
+    : IRequestHandler<GetStudentScheduleQuery, ScheduleDto>
 {
     public async Task<ScheduleDto> Handle(GetStudentScheduleQuery query, CancellationToken ct)
     {

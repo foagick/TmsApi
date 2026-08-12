@@ -6,14 +6,15 @@ using TmsApi.Domain.Entities;
 using TmsApi.Infrastructure.Persistence;
 
 namespace TmsApi.Infrastructure.Services;
+
 public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> logger) : IEnrollmentService
 {
     public Task<EnrollmentResponseDto?> GetByIdAsync(int courseId, int id, CancellationToken ct) =>
-    context.Enrollments
-    .AsNoTracking()
-    .Where(e => e.Id == id && e.CourseId == courseId)
-    .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
-    .FirstOrDefaultAsync(ct);
+        context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.Id == id && e.CourseId == courseId)
+            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
+            .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<EnrollmentResponseDto>> GetByCourseAsync(int courseId, CancellationToken ct)
     {
@@ -25,13 +26,14 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
             .ToListAsync(ct);
     }
 
-    public async Task<EnrollmentResponseDto> CreateAsync(int courseId,EnrollStudentRequest request, CancellationToken ct)
+    public async Task<EnrollmentResponseDto> CreateAsync(int courseId, EnrollStudentRequest request,
+        CancellationToken ct)
     {
         // Validate that the student exists
         var studentExists = await context.Students
             .AsNoTracking()
             .AnyAsync(s => s.Id == request.StudentId, ct);
-        
+
         if (!studentExists)
         {
             throw new KeyNotFoundException($"Student with ID {request.StudentId} not found.");
@@ -41,7 +43,7 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         var courseExists = await context.Courses
             .AsNoTracking()
             .AnyAsync(c => c.Id == courseId, ct);
-        
+
         if (!courseExists)
         {
             throw new KeyNotFoundException($"Course with ID {courseId} not found.");
@@ -51,10 +53,11 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         var alreadyEnrolled = await context.Enrollments
             .AsNoTracking()
             .AnyAsync(e => e.StudentId == request.StudentId && e.CourseId == courseId, ct);
-        
+
         if (alreadyEnrolled)
         {
-            throw new InvalidOperationException($"Student {request.StudentId} is already enrolled in course {courseId}.");
+            throw new InvalidOperationException(
+                $"Student {request.StudentId} is already enrolled in course {courseId}.");
         }
 
         var enrollment = new Enrollment
@@ -70,8 +73,7 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
             enrollment.Id, enrollment.StudentId, enrollment.CourseId);
 
         return await GetByIdAsync(courseId, enrollment.Id, ct)
-            ?? throw new InvalidOperationException("Enrollment was not found after creation.");
-
+               ?? throw new InvalidOperationException("Enrollment was not found after creation.");
     }
 
     public async Task<bool> ExistsAsync(int studentId, string courseCode, CancellationToken ct)
