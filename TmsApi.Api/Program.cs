@@ -63,8 +63,8 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
-builder.Services.AddSingleton < ITranscriptStatusStore, InMemoryTranscriptStatusStore > ();
-builder.Services.AddSingleton < ITranscriptNotificationService, SignalRTranscriptNotificationService > ();
+builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
+builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -187,20 +187,20 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
-    var allowedOrigins = builder.Configuration
-    .GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
+var allowedOrigins = builder.Configuration
+.GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
 
-    builder.Services.AddCors(options =>
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("TmsClient", policy =>
     {
-        options.AddPolicy("TmsClient", policy =>
-        {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials()
-                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
-        });
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
+});
 
 builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
     new BoundedChannelOptions(100)
@@ -254,71 +254,22 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
 
 app.Use(async (context, next) =>
 {
-if (context.User.Identity?.IsAuthenticated == true || context.
-Request.Cookies.ContainsKey("tms_auth"))
-{
-var antiforgery = context.RequestServices
-.GetRequiredService<IAntiforgery>();
-var tokens = antiforgery.GetAndStoreTokens(context);
-context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
-new CookieOptions
-{
-HttpOnly = false, // MUST be false so Angular JavaScript can read it!
-Secure = !builder.Environment.IsDevelopment(),
-SameSite = SameSiteMode.Strict
+    if (context.User.Identity?.IsAuthenticated == true || context.
+    Request.Cookies.ContainsKey("tms_auth"))
+    {
+        var antiforgery = context.RequestServices
+        .GetRequiredService<IAntiforgery>();
+        var tokens = antiforgery.GetAndStoreTokens(context);
+        context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+        new CookieOptions
+        {
+            HttpOnly = false, // MUST be false so Angular JavaScript can read it!
+            Secure = !builder.Environment.IsDevelopment(),
+            SameSite = SameSiteMode.Strict
+        });
+    }
+    await next(context);
 });
-}
-await next(context);
-});
 
-
-// Seed test data at startup
-// using (var scope = app.Services.CreateScope())
-//     {
-
-//     var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
-//     context.Database.Migrate(); // Applies any pending migrations; keeps migration history intact
-
-//     if (!context.Students.Any())
-//         {
-
-//         var students = new List<Student>
-//             {
-
-//             new() { RegistrationNumber = "TMS-2026-0001", Name = "AliceSmith", GPA = 3.8m, IsActive = true },
-//             new() { RegistrationNumber = "TMS-2026-0002", Name = "Bob Jones", GPA = 2.9m, IsActive = true },
-//             new() { RegistrationNumber = "TMS-2026-0003", Name = "Charlie Brown", GPA = 3.4m, IsActive = false },
-//             new() { RegistrationNumber = "TMS-2026-0004", Name = "DianaPrince", GPA = 3.9m, IsActive = true },
-//             new() { RegistrationNumber = "TMS-2026-0005", Name = "EvanWright", GPA = 2.5m, IsActive = true }
-
-//             };
-
-//         context.Students.AddRange(students);
-
-//         var courses = new List<Course>
-//             {
-
-//             new() { Code = "CS-101", Title = "Introduction to ComputerScience", MaxCapacity = 30 },
-//             new() { Code = "CS-201", Title = "Data Structures and Algorithms", MaxCapacity = 25 },
-//             new() { Code = "MAT-101", Title = "Calculus I", MaxCapacity = 40 }
-
-//             };
-
-//         context.Courses.AddRange(courses);
-//         context.SaveChanges();
-
-//         var enrollments = new List<Enrollment>
-//             {
-
-//             new() { StudentId = students[0].Id, CourseId = courses[0].Id, Grade = 4.0m },
-//             new() { StudentId = students[0].Id, CourseId = courses[1].Id, Grade = 3.6m },
-//             new() { StudentId = students[1].Id, CourseId = courses[0].Id, Grade = 2.8m },
-//             new() { StudentId = students[3].Id, CourseId = courses[1].Id, Grade = 3.9m }
-//             };
-
-//         context.Enrollments.AddRange(enrollments);
-//         context.SaveChanges();
-//             }
-//     }
 
 app.Run();
