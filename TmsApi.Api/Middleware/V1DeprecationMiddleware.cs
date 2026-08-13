@@ -1,9 +1,11 @@
 namespace TmsApi.Api.Middleware;
+
 public class V1DeprecationMiddleware(RequestDelegate next)
 {
     private static readonly DateTimeOffset SunsetDate =
-new(2026, 12, 31, 0, 0, 0, TimeSpan.Zero);
-public async Task InvokeAsync(HttpContext context)
+        new(2026, 12, 31, 0, 0, 0, TimeSpan.Zero);
+
+    public async Task InvokeAsync(HttpContext context)
     {
         context.Response.OnStarting(() =>
         {
@@ -11,8 +13,10 @@ public async Task InvokeAsync(HttpContext context)
             {
                 context.Response.Headers["Deprecation"] = "true";
                 context.Response.Headers["Sunset"] = SunsetDate.ToString("R");
-                context.Response.Headers["Link"] = $"<{context.Request.Scheme}://{context.Request.Host}/api/v2{context.Request.Path.Value?[7..]}>; rel=\"successor-version\"";
+                context.Response.Headers["Link"] =
+                    $"<{context.Request.Scheme}://{context.Request.Host}/api/v2{context.Request.Path.Value?[7..]}>; rel=\"successor-version\"";
             }
+
             return Task.CompletedTask;
         });
 

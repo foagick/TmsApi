@@ -4,8 +4,9 @@ using TmsApi.Infrastructure.Transcripts;
 
 public class InMemoryTranscriptStatusStore : ITranscriptStatusStore
 {
-    private readonly ConcurrentDictionary<string, TranscriptStatus> _byReportId = new ();
-    private readonly ConcurrentDictionary<string, string> _idempotencyToReportId = new ();
+    private readonly ConcurrentDictionary<string, TranscriptStatus> _byReportId = new();
+    private readonly ConcurrentDictionary<string, string> _idempotencyToReportId = new();
+
     public Task<TranscriptStatus> CreateAsync(string reportId, int studentId, CancellationToken ct)
     {
         var status = new TranscriptStatus(
@@ -21,7 +22,7 @@ public class InMemoryTranscriptStatusStore : ITranscriptStatusStore
             State = TranscriptState.Processing,
             StartedAt = DateTimeOffset.UtcNow
         }, allowedFrom: TranscriptState.Queued);
-    
+
     public Task MarkReadyAsync(string reportId, string downloadUrl, CancellationToken ct) =>
         Transition(reportId, current => current with
         {
@@ -29,7 +30,7 @@ public class InMemoryTranscriptStatusStore : ITranscriptStatusStore
             CompletedAt = DateTimeOffset.UtcNow,
             DownloadUrl = downloadUrl
         }, allowedFrom: TranscriptState.Processing);
-    
+
     public Task MarkFailedAsync(string reportId, string error, CancellationToken ct) =>
         Transition(reportId, current => current with
         {
@@ -37,12 +38,12 @@ public class InMemoryTranscriptStatusStore : ITranscriptStatusStore
             CompletedAt = DateTimeOffset.UtcNow,
             ErrorMessage = error
         }, allowedFrom: TranscriptState.Processing);
-    
+
     public Task<TranscriptStatus?> GetAsync(string reportId, CancellationToken ct) =>
         Task.FromResult(_byReportId.TryGetValue(reportId, out var s) ? s : null);
 
     public Task<string?> GetReportIdForIdempotencyKeyAsync(string key, CancellationToken ct) =>
-        Task.FromResult(_idempotencyToReportId.TryGetValue(key, out var id)? id: null);
+        Task.FromResult(_idempotencyToReportId.TryGetValue(key, out var id) ? id : null);
 
     public Task LinkIdempotencyKeyAsync(string key, string reportId, CancellationToken ct)
     {
@@ -50,14 +51,15 @@ public class InMemoryTranscriptStatusStore : ITranscriptStatusStore
         return Task.CompletedTask;
     }
 
-    private Task Transition(string reportId, Func<TranscriptStatus, TranscriptStatus> change, TranscriptState allowedFrom)
+    private Task Transition(string reportId, Func<TranscriptStatus, TranscriptStatus> change,
+        TranscriptState allowedFrom)
     {
         if (!_byReportId.TryGetValue(reportId, out var current))
             throw new InvalidOperationException($"Unknown report id {reportId}.");
         if (current.State != allowedFrom)
             throw new InvalidOperationException(
                 $"Cannot move {reportId} from {current.State} via this transition(expected {
-            allowedFrom}).");
+                    allowedFrom}).");
         _byReportId[reportId] = change(current);
         return Task.CompletedTask;
     }

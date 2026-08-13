@@ -3,6 +3,7 @@ using TmsApi.Application.DTOs;
 using TmsApi.Domain.Entities;
 
 namespace TmsApi.Application.Services;
+
 public interface ICourseService
 {
     Task<CourseResponseDto?> GetByIdAsync(int id, CancellationToken ct);

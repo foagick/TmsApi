@@ -11,14 +11,12 @@ public class GetAllCoursesHandler(ICachedCourseService cachedService)
         cachedService.GetAllCoursesAsync(ct);
 }
 
-
 public class GetCourseByCodeHandler(ICachedCourseService cachedService)
     : IRequestHandler<GetCourseByCodeQuery, CourseDto>
 {
     public Task<CourseDto> Handle(GetCourseByCodeQuery request, CancellationToken ct) =>
         cachedService.GetCourseAsync(request.Code, ct);
 }
-
 
 public class SearchCoursesHandler(ICourseService repo)
     : IRequestHandler<SearchCoursesQuery, List<CourseDto>>
