@@ -4,7 +4,7 @@ using TmsApi.Application.DTOs;
 namespace TmsApi.Api.Controllers;
 
 [ApiController]
-[Route("api/{version:apiVersion}/auth")]
+[Route("api/v{version:apiVersion}/auth")]
 public class AuthController : ControllerBase
 {
     [HttpPost("login")]
