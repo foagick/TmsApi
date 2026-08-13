@@ -7,7 +7,6 @@ namespace TmsApi.Api.Controllers;
 [Route("api/test")]
 public class TestController(TmsDbContext context) : ControllerBase
 {
-
   [HttpGet("deferred")]
   public IActionResult TestDeferred()
   {
@@ -19,8 +18,8 @@ public class TestController(TmsDbContext context) : ControllerBase
     var results = orderedQuery.ToList(); // Execution is triggered here
     Console.WriteLine(">>> STEP 4: Materialization finished. List populated.\n");
     return Ok(results);
-
   }
+
   // Non-translatable helper method
   private static bool IsHonorRoll(decimal gpa)
   {
@@ -46,5 +45,4 @@ public class TestController(TmsDbContext context) : ControllerBase
       return BadRequest(new { Message = ex.Message });
     }
   }
-
 }

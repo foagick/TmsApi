@@ -19,7 +19,7 @@ public class EnrollmentsController(IMediator mediator, IHubContext<TmsHub, ITmsH
         EnrollStudentCommand command, CancellationToken ct)
     {
         var result = await mediator.Send(command, ct);
-        return result.Match<IActionResult> (
+        return result.Match<IActionResult>(
             onSuccess: created => CreatedAtAction(
                 nameof(GetSchedule),
                 new { studentId = created.StudentId },
@@ -57,11 +57,10 @@ public class EnrollmentsController(IMediator mediator, IHubContext<TmsHub, ITmsH
         string id, CancellationToken ct)
     {
         // Your existing approval logic ...
-        
+
         // After the database commit succeeds, broadcast to all connected Angular clients
-            await hubContext.Clients.All
+        await hubContext.Clients.All
             .ReceiveEnrollmentStatusUpdated(id, "Approved");
         return NoContent();
     }
-
 }

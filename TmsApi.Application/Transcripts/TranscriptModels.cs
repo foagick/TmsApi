@@ -1,6 +1,12 @@
 namespace TmsApi.Application.Transcripts;
 
-public enum TranscriptState { Queued, Processing, Ready, Failed}
+public enum TranscriptState
+{
+    Queued,
+    Processing,
+    Ready,
+    Failed
+}
 
 public record TranscriptRequest(int StudentId, string? ReportId = null)
 {
@@ -9,7 +15,8 @@ public record TranscriptRequest(int StudentId, string? ReportId = null)
         ReportId = id
     };
 }
-public record TranscriptStatus (
+
+public record TranscriptStatus(
     string ReportId,
     int StudentId,
     TranscriptState State,

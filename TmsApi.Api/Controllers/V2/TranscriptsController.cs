@@ -27,32 +27,32 @@ public class TranscriptsController(
             {
                 var existingStatus = await statusStore.GetAsync(existing, ct);
 
-            return Accepted(
-                Url.Action(nameof(GetStatus), new
-                {
-                    id = existing
-                }),
-                existingStatus);
+                return Accepted(
+                    Url.Action(nameof(GetStatus), new
+                    {
+                        id = existing
+                    }),
+                    existingStatus);
+            }
         }
-    }
 
-    var reportId = Guid.NewGuid().ToString("N")[..12];
+        var reportId = Guid.NewGuid().ToString("N")[..12];
 
-    var status = await statusStore.CreateAsync(reportId, request.StudentId, ct);
+        var status = await statusStore.CreateAsync(reportId, request.StudentId, ct);
         if (!string.IsNullOrWhiteSpace(idempotencyKey))
             await statusStore.LinkIdempotencyKeyAsync(idempotencyKey, reportId, ct);
-            await channel.Writer.WriteAsync(request.WithReportId(reportId), ct);
+        await channel.Writer.WriteAsync(request.WithReportId(reportId), ct);
 
         Response.Headers.RetryAfter = "5";
         return Accepted(
-            Url.Action(nameof(GetStatus), new {
-            id = reportId
-        }),
-
-        status);
+            Url.Action(nameof(GetStatus), new
+            {
+                id = reportId
+            }),
+            status);
     }
 
-[HttpGet("{id}/status")]
+    [HttpGet("{id}/status")]
     public async Task<IActionResult> GetStatus(string id, CancellationToken ct)
     {
         var status = await statusStore.GetAsync(id, ct);
