@@ -47,6 +47,24 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<EnrollmentDetailsDto>> GetAllDetailsAsync(CancellationToken ct)
+    {
+        return await context.Enrollments
+            .AsNoTracking()
+            .Include(e => e.Student)
+            .Include(e => e.Course)
+            .OrderByDescending(e => e.EnrolledAt)
+            .Select(e => new EnrollmentDetailsDto(
+                e.Id.ToString(),
+                e.StudentId,
+                e.Student != null ? e.Student.Name : "Unknown Student",
+                e.CourseId,
+                e.Course != null ? e.Course.Title : "Unknown Course",
+                "Pending",
+                e.EnrolledAt))
+            .ToListAsync(ct);
+    }
+
     
 
     public async Task<EnrollmentResponseDto> CreateAsync(int courseId, EnrollStudentRequest request,

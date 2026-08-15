@@ -65,30 +65,9 @@ public class EnrollmentsController(IMediator mediator, IHubContext<TmsHub, ITmsH
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var mockEnrollments = new[]
-        {
-            new { 
-                id = "1", 
-                studentId = 101, 
-                studentName = "Liya Kebede", 
-                courseId = 201, 
-                courseName = "Angular Deep Dive", 
-                status = "Pending", 
-                enrolledAt = DateTime.UtcNow.ToString("o") 
-            },
-            new { 
-                id = "2", 
-                studentId = 102, 
-                studentName = "Aman Bekele", 
-                courseId = 202, 
-                courseName = ".NET Core Architecture", 
-                status = "Pending", 
-                enrolledAt = DateTime.UtcNow.ToString("o") 
-            }
-        };
-
-        return Ok(mockEnrollments);
+        var enrollments = await mediator.Send(new GetAllEnrollmentsQuery(), ct);
+        return Ok(enrollments);
     }
 }
