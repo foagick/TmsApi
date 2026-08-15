@@ -22,7 +22,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
             _ => (
                 StatusCodes.Status500InternalServerError,
                 "Server error",
-                $"An unexpected error occurred. Trace ID: {httpContext.TraceIdentifier}",
+                $"An unexpected error occurred ({exception.GetType().Name}: {exception.Message}). Trace ID: {httpContext.TraceIdentifier}. Details: {exception}",
                 null)
         };
         if (status == StatusCodes.Status500InternalServerError)
