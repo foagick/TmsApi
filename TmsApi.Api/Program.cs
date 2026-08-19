@@ -26,6 +26,17 @@ using TmsApi.Infrastructure.Transcripts;
 using TmsApi.Infrastructure.Workers;
 using TmsApi.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
+using System.Security.Cryptography.X509Certificates;
+using Npgsql.Replication;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+// Public static void AddInfradturcreServices(this IservicesCollection services, IConfiguration configuration)
+// {
+
+// }
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +83,7 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
+builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddHealthChecks();
 
@@ -161,7 +173,7 @@ builder.Services.AddDbContext<TmsDbContext>(options =>
 //             .LogTo(Console.WriteLine, LogLevel.Information)
 //             .EnableSensitiveDataLogging());
 
-builder.Services.AddAuthentication();
+// builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 // Add API versioning
@@ -214,18 +226,40 @@ builder.Services.AddAntiforgery(options => { options.HeaderName = "X-XSRF-TOKEN"
 
 builder.Services.AddIdentityCore<TmsUser>(options =>
 {
-// Enterprise Password Policy
-options.Password.RequiredLength = 12;
-options.Password.RequireUppercase = true;
-options.Password.RequireDigit = true;
-options.Password.RequireNonAlphanumeric = true;
-// Brute-Force Lockout Protection
-options.Lockout.MaxFailedAccessAttempts = 5;
-options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-options.Lockout.AllowedForNewUsers = true;
+    // Enterprise Password Policy
+    options.Password.RequiredLength = 12;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequireNonAlphanumeric = true;
+    // Brute-Force Lockout Protection
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.AllowedForNewUsers = true;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<TmsDbContext>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme =
+    JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme =
+    JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
 
 var app = builder.Build();
 
