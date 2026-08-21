@@ -32,6 +32,8 @@ using System.Security.Cryptography.X509Certificates;
 using Npgsql.Replication;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Tms.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 // Public static void AddInfradturcreServices(this IservicesCollection services, IConfiguration configuration)
 // {
@@ -76,6 +78,7 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
 builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
 builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -158,6 +161,13 @@ builder.Services.AddRateLimiter(options =>
         opt.TokensPerPeriod = 5;
         opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
         opt.QueueLimit = 2;
+    });
+
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
     });
 });
 
@@ -261,6 +271,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorizationBuilder()
+.AddPolicy("CanEditCourse", policy =>
+policy.Requirements.Add(new CourseInstructorRequirement()));
+
 var app = builder.Build();
 
 
@@ -290,6 +304,12 @@ app.Use(async (context, next) =>
                 SameSite = SameSiteMode.Strict
             });
     }
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';");
 
     await next(context);
 });
