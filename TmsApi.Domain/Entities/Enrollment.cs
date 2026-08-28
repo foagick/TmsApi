@@ -12,5 +12,6 @@ namespace TmsApi.Domain.Entities
         public bool IsArchived { get; set; } = false;
         public Student Student { get; set; } = null!;
         public Course Course { get; set; } = null!;
+        public string Status { get; set; }
     }
 }

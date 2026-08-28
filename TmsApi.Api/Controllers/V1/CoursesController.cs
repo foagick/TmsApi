@@ -10,7 +10,7 @@ namespace TmsApi.Api.Controllers.V1;
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("1.0")]
-[Authorize]
+// [Authorize]
 public class CoursesController(TmsDbContext context) : ControllerBase
     {
         

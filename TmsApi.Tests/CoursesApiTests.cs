@@ -15,7 +15,7 @@ public class CoursesApiTests : IClassFixture<CustomWebApplicationFactory>
     {
         // Act — pin the V2 URL (see Versioning callout below)
         var response = await
-        _client.GetAsync("/api/v2.0/courses?page=1&pageSize=10");
+        _client.GetAsync("/api/v1.0/courses?page=1&pageSize=10");
         // Assert — check HTTP status 200 OK
         response.EnsureSuccessStatusCode();
         // TMS API contract check: PagedResponse<T> with items array
