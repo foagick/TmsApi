@@ -32,6 +32,8 @@ using System.Security.Cryptography.X509Certificates;
 using Npgsql.Replication;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Tms.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 // Public static void AddInfradturcreServices(this IservicesCollection services, IConfiguration configuration)
 // {
@@ -76,6 +78,7 @@ builder.Services.AddControllers(options => { options.Filters.Add<AuditLogFilter>
 
 // Register services
 // builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
 builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
 builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -159,6 +162,13 @@ builder.Services.AddRateLimiter(options =>
         opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
         opt.QueueLimit = 2;
     });
+
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
 });
 
 builder.Services.AddProblemDetails();
@@ -173,7 +183,7 @@ builder.Services.AddDbContext<TmsDbContext>(options =>
 //             .LogTo(Console.WriteLine, LogLevel.Information)
 //             .EnableSensitiveDataLogging());
 
-// builder.Services.AddAuthentication();
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 // Add API versioning
@@ -261,6 +271,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorizationBuilder()
+.AddPolicy("CanEditCourse", policy =>
+policy.Requirements.Add(new CourseInstructorRequirement()));
+
 var app = builder.Build();
 
 
@@ -271,30 +285,59 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("TmsClient");
 app.UseRateLimiter();
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.Use(async (context, next) =>
 {
-    if (context.User.Identity?.IsAuthenticated == true || context.Request.Cookies.ContainsKey("tms_auth"))
+    if (context.User.Identity?.IsAuthenticated == true ||
+        context.Request.Cookies.ContainsKey("tms_auth"))
     {
         var antiforgery = context.RequestServices
             .GetRequiredService<IAntiforgery>();
+
         var tokens = antiforgery.GetAndStoreTokens(context);
-        context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+
+        context.Response.Cookies.Append(
+            "XSRF-TOKEN",
+            tokens.RequestToken!,
             new CookieOptions
             {
-                HttpOnly = false, // MUST be false so Angular JavaScript can read it!
+                HttpOnly = false, // Angular must be able to read this
                 Secure = !builder.Environment.IsDevelopment(),
                 SameSite = SameSiteMode.Strict
             });
     }
 
-    await next(context);
+    // Security headers
+    context.Response.Headers.Append(
+        "X-Content-Type-Options",
+        "nosniff");
+
+    context.Response.Headers.Append(
+        "X-Frame-Options",
+        "DENY");
+
+    context.Response.Headers.Append(
+        "Referrer-Policy",
+        "strict-origin-when-cross-origin");
+
+    context.Response.Headers.Append(
+        "Content-Security-Policy",
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline';");
+
+    await next();
 });
 
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
+// app.MapScalarApiReference();
 app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
 app.MapHealthChecks("/health/live").DisableRateLimiting();
