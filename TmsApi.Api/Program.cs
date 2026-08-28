@@ -369,3 +369,4 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
 
 
 app.Run();
+public partial class Program { }
