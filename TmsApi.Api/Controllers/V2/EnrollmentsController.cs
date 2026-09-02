@@ -6,13 +6,19 @@ using TmsApi.Api.Hubs;
 using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Enrollments.Queries;
 using TmsApi.Application.Hubs;
+using TmsApi.Application.Services;
+using TmsApi.Infrastructure.Persistence;
 
 namespace TmsApi.Api.Controllers.V2;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/enrollments")]
 [ApiVersion("2.0")]
-public class EnrollmentsController(IMediator mediator, IHubContext<TmsHub, ITmsHubClient> hubContext) : ControllerBase
+public class EnrollmentsController(
+    IMediator mediator,
+    IEnrollmentService enrollmentService,
+    TmsDbContext context,
+    IHubContext<TmsHub, ITmsHubClient> hubContext) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Enroll(
@@ -56,40 +62,36 @@ public class EnrollmentsController(IMediator mediator, IHubContext<TmsHub, ITmsH
     public async Task<IActionResult> Approve(
         string id, CancellationToken ct)
     {
-        // Your existing approval logic ...
+        if (!int.TryParse(id, out var enrollmentId))
+            return NotFound(new ProblemDetails
+            {
+                Title = "Enrollment not found",
+                Detail = $"No enrollment with id '{id}'.",
+                Status = StatusCodes.Status404NotFound
+            });
 
-        // After the database commit succeeds, broadcast to all connected Angular clients
+        var enrollment = await context.Enrollments.FindAsync([enrollmentId], ct);
+        if (enrollment is null)
+            return NotFound(new ProblemDetails
+            {
+                Title = "Enrollment not found",
+                Detail = $"No enrollment with id '{id}'.",
+                Status = StatusCodes.Status404NotFound
+            });
+
+        enrollment.Status = "Approved";
+        await context.SaveChangesAsync(ct);
+
         await hubContext.Clients.All
             .ReceiveEnrollmentStatusUpdated(id, "Approved");
         return NoContent();
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var mockEnrollments = new[]
-        {
-            new { 
-                id = "1", 
-                studentId = 101, 
-                studentName = "Liya Kebede", 
-                courseId = 201, 
-                courseName = "Angular Deep Dive", 
-                status = "Pending", 
-                enrolledAt = DateTime.UtcNow.ToString("o") 
-            },
-            new { 
-                id = "2", 
-                studentId = 102, 
-                studentName = "Aman Bekele", 
-                courseId = 202, 
-                courseName = ".NET Core Architecture", 
-                status = "Pending", 
-                enrolledAt = DateTime.UtcNow.ToString("o") 
-            }
-        };
-
-        return Ok(mockEnrollments);
+        var enrollments = await enrollmentService.GetAllAsync(ct);
+        return Ok(enrollments);
     }
     
 }

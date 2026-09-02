@@ -25,6 +25,10 @@ namespace TmsApi.Infrastructure.Persistence.Configurations
                      builder.Property(e => e.Grade)
                             .HasPrecision(4, 2); // e.g. 95.50
 
+                     builder.Property(e => e.Status)
+                            .HasMaxLength(20)
+                            .HasDefaultValue("Pending");
+
                      // Default enrollment timestamp
                      builder.Property(e => e.EnrolledAt)
                             .HasDefaultValueSql("CURRENT_TIMESTAMP");

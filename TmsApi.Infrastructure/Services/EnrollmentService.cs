@@ -17,7 +17,8 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
                 e.Id,
                 e.CourseId,
                 e.StudentId,
-                e.EnrolledAt))
+                e.EnrolledAt,
+                e.Status))
             .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<EnrollmentResponseDto>> GetByCourseAsync(int courseId, CancellationToken ct)
@@ -30,7 +31,8 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
                 e.Id,
                 e.CourseId,
                 e.StudentId,
-                e.EnrolledAt))
+                e.EnrolledAt,
+                e.Status))
             .ToListAsync(ct);
     }
 
@@ -43,7 +45,8 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
                 e.Id,
                 e.CourseId,
                 e.StudentId,
-                e.EnrolledAt))
+                e.EnrolledAt,
+                e.Status))
             .ToListAsync(ct);
     }
 

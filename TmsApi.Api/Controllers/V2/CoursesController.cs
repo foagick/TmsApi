@@ -5,18 +5,28 @@ using Microsoft.AspNetCore.RateLimiting;
 using TmsApi.Application.Courses.Commands;
 using TmsApi.Application.Courses.Queries;
 using TmsApi.Application.DTOs;
+using TmsApi.Application.Services;
 
 namespace TmsApi.Api.Controllers.V2;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("2.0")]
-public class CoursesController(IMediator mediator) : ControllerBase
+public class CoursesController(IMediator mediator, ICourseService courseService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetCourses(CancellationToken ct)
+    public async Task<IActionResult> GetCourses(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null,
+        CancellationToken ct = default)
     {
-        var courses = await mediator.Send(new GetAllCoursesQuery(), ct);
+        var courses = await courseService.GetCoursesAsync(new PagedRequest
+        {
+            Page = page,
+            PageSize = pageSize,
+            Search = search
+        }, ct);
         return Ok(courses);
     }
 
