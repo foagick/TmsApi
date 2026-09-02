@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Application.DTOs;
 using TmsApi.Domain.Entities;
@@ -27,10 +28,12 @@ public class AuthController : ControllerBase
         _context = context;
         _tokenService = tokenService;
     }
+
+    [EnableRateLimiting("AuthLimiter")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Username);
+        var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null) return Unauthorized(new { detail = "Invalid credentials." });
         if (await _userManager.IsLockedOutAsync(user))
         {
