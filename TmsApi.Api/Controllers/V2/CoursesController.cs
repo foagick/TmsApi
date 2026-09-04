@@ -53,6 +53,10 @@ public class CoursesController(IMediator mediator, ICourseService courseService)
         UpdateCourseRequest request,
         CancellationToken ct)
     {
+        var validationErrors = ValidateUpdate(request);
+        if (validationErrors.Count > 0)
+            return BadRequest(new ValidationProblemDetails(validationErrors));
+
         await mediator.Send(new UpdateCourseCommand(id, request.Title, request.Code, request.MaxCapacity), ct);
         return NoContent();
     }
@@ -62,6 +66,10 @@ public class CoursesController(IMediator mediator, ICourseService courseService)
         CreateCourseRequest request,
         CancellationToken ct)
     {
+        var validationErrors = ValidateCreate(request);
+        if (validationErrors.Count > 0)
+            return BadRequest(new ValidationProblemDetails(validationErrors));
+
         var id = await mediator.Send(
             new CreateCourseCommand(request.Code, request.Title, request.MaxCapacity),
             ct);
@@ -73,5 +81,35 @@ public class CoursesController(IMediator mediator, ICourseService courseService)
     {
         await mediator.Send(new DeleteCourseCommand(id), ct);
         return NoContent();
+    }
+
+    private static Dictionary<string, string[]> ValidateCreate(CreateCourseRequest request)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request.Code))
+            errors[nameof(request.Code)] = ["Code is required."];
+        else if (request.Code.Length > 50)
+            errors[nameof(request.Code)] = ["Code must be 50 characters or fewer."];
+        if (string.IsNullOrWhiteSpace(request.Title))
+            errors[nameof(request.Title)] = ["Title is required."];
+        else if (request.Title.Length > 200)
+            errors[nameof(request.Title)] = ["Title must be 200 characters or fewer."];
+        if (request.MaxCapacity <= 0)
+            errors[nameof(request.MaxCapacity)] = ["Max capacity must be greater than zero."];
+        return errors;
+    }
+
+    private static Dictionary<string, string[]> ValidateUpdate(UpdateCourseRequest request)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (request.Title is null && request.Code is null && request.MaxCapacity is null)
+            errors["request"] = ["At least one course field must be provided."];
+        if (request.Title is not null && request.Title.Length > 200)
+            errors[nameof(request.Title)] = ["Title must be 200 characters or fewer."];
+        if (request.Code is not null && request.Code.Length > 50)
+            errors[nameof(request.Code)] = ["Code must be 50 characters or fewer."];
+        if (request.MaxCapacity is <= 0)
+            errors[nameof(request.MaxCapacity)] = ["Max capacity must be greater than zero."];
+        return errors;
     }
 }
